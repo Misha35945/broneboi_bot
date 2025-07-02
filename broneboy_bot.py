@@ -9,7 +9,7 @@ from telegram.ext import (
 )
 
 # === Настройки ===
-BOT_TOKEN = "7518061806:AAG8eMw3KH3vzkYIK7H54YwJGG0VIt6LqKo"
+BOT_TOKEN = "7518061806:AAFbwc3UmUaYxaRd2GJtTargLA9E0mJDLgo"
 ADMIN_IDS = [8064681880]  # ← замени на свой Telegram ID
 CARD_NUMBER = "2200 7009 0060 1229 (т банк Михаил)"  # ← номер карты для перевода
 
