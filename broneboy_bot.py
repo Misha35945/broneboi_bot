@@ -288,13 +288,20 @@ async def register_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
 
-    app.add_handler(CommandHandler("Start", start))
-    app.add_handler(CommandHandler("Tournaments", tournaments))
-    app.add_handler(CommandHandler("Winrate", winrate))
-    app.add_handler(CommandHandler("Admin", admin))
-    
+    # Обработчики команд
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("tournaments", tournaments))
+    app.add_handler(CommandHandler("admin", admin))
+    app.add_handler(CommandHandler("add_tournament", add_tournament))
+    app.add_handler(CommandHandler("list_players", list_players))
+    app.add_handler(CommandHandler("confirm", confirm))
+    app.add_handler(CommandHandler("winrate", winrate))
+    app.add_handler(CommandHandler("edit_winrate", edit_winrate))
     app.add_handler(CallbackQueryHandler(register_callback))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+
+    # Установка меню команд
+    asyncio.run(set_commands(app))
 
     print("🤖 Бот запущен!")
     app.run_polling()
