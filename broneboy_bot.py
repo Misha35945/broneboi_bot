@@ -1,5 +1,4 @@
 import logging
-import asyncio
 import sqlite3
 from telegram import (
     Update, InlineKeyboardButton, InlineKeyboardMarkup
@@ -300,9 +299,6 @@ def main():
     app.add_handler(CallbackQueryHandler(register_callback))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    
-    # Установка меню команд
-    asyncio.run(set_commands(app))
 
     print("🤖 Бот запущен!")
     app.run_polling()
