@@ -1,4 +1,3 @@
-
 import logging
 import sqlite3
 from telegram import (
@@ -10,13 +9,11 @@ from telegram.ext import (
 )
 
 # === Настройки ===
-
 BOT_TOKEN = "7518061806:AAFbwc3UmUaYxaRd2GJtTargLA9E0mJDLgo"
 ADMIN_IDS = [8064681880]  # ← замени на свой Telegram ID
 CARD_NUMBER = "2200 7009 0060 1229 (т банк Михаил)"
 
 # === База данных ===
-
 conn = sqlite3.connect("tournaments.db", check_same_thread=False)
 cursor = conn.cursor()
 
@@ -33,8 +30,7 @@ CREATE TABLE IF NOT EXISTS registrations (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER,
     username TEXT,
-    tournament_id INTEGER,
-    team TEXT DEFAULT NULL
+    tournament_id INTEGER
 )
 """)
 
@@ -49,33 +45,32 @@ CREATE TABLE IF NOT EXISTS winrates (
 conn.commit()
 
 # === Логгирование ===
-
 logging.basicConfig(level=logging.INFO)
 
 # === Команды ===
-
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         await update.message.reply_photo(
             photo="https://i.ibb.co/4wNtnnVM/start.jpg",
             caption=(
-                "👋 Привет! Я Бронебой Бот."
-                "Команды"
-                "/tournaments — активные турниры"
-                "/winrate — статистика игроков"
+                "👋 Привет! Я Бронебой Бот.\n\n"
+                "Команды:\n"
+                "/tournaments — активные турниры\n"
+                "/winrate — статистика игроков\n"
             )
         )
     except:
         await update.message.reply_text(
-            "👋 Привет! Я Бронебой Бот."
-            "Команды:"
-            "/tournaments — активные турниры"
-            "/winrate — статистика игроков"
+            "👋 Привет! Я Бронебой Бот.\n\n"
+            "Команды:\n"
+            "/tournaments — активные турниры\n"
+            "/winrate — статистика игроков\n"
         )
 
 async def tournaments(update: Update, context: ContextTypes.DEFAULT_TYPE):
     cursor.execute("SELECT * FROM tournaments")
     rows = cursor.fetchall()
+
     if not rows:
         await update.message.reply_text("Нет активных турниров.")
         return
@@ -83,14 +78,11 @@ async def tournaments(update: Update, context: ContextTypes.DEFAULT_TYPE):
     for row in rows:
         tournament_id, name, fee = row
         btn = InlineKeyboardMarkup([
-            [
-                InlineKeyboardButton("✅ Индивидуально", callback_data=f"register_{tournament_id}_solo"),
-                InlineKeyboardButton("👥 Командой", callback_data=f"register_{tournament_id}_team")
-            ]
+            [InlineKeyboardButton("✅ Зарегистрироваться", callback_data=f"register_{tournament_id}")]
         ])
         fee_text = f"💰 Взнос: {fee}₽" if fee else "🎉 Бесплатно"
         await update.message.reply_text(
-            f"🏆 Турнир: {name} {fee_text}",
+            f"🏆 Турнир: {name}\n{fee_text}",
             reply_markup=btn
         )
 
@@ -101,22 +93,22 @@ async def winrate(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Нет данных по winrate.")
         return
 
-    text = "🏆 Winrate игроков:"
+    text = "🏆 Winrate игроков:\n\n"
     for username, wins in rows:
         name = f"@{username}" if username else "Без username"
-        text += f"{name} — {wins} побед(ы)"
+        text += f"{name} — {wins} побед(ы)\n"
     await update.message.reply_text(text)
 
 async def confirm(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("📝 Спасибо! Организатор скоро проверит оплату.")
 
 # === Админ-панель ===
-
 async def admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id not in ADMIN_IDS:
         await update.message.reply_text("❌ У вас нет доступа.")
         return
 
+    # Удаление турниров
     cursor.execute("SELECT id, name FROM tournaments")
     rows = cursor.fetchall()
     if rows:
@@ -125,6 +117,7 @@ async def admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await update.message.reply_text("Нет турниров для удаления.")
 
+    # Редактирование winrate
     cursor.execute("SELECT id, username, wins FROM winrates")
     winrate_rows = cursor.fetchall()
     for row_id, username, wins in winrate_rows:
@@ -135,9 +128,9 @@ async def admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"{user_display}: {wins} побед(ы)", reply_markup=btn)
 
     await update.message.reply_text(
-        "⚙️ Админ-панель:"
-        "/add_tournament — добавить турнир"
-        "/list_players — список участников"
+        "⚙️ Админ-панель:\n"
+        "/add_tournament — добавить турнир\n"
+        "/list_players — список участников\n"
         "/edit_winrate — добавить/обновить победы игрока"
     )
 
@@ -147,8 +140,8 @@ async def add_tournament(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     await update.message.reply_text(
-        "Введите название турнира и взнос через запятую:"
-        "Пример:`Летний Турнир, 0` — бесплатный"
+        "Введите название турнира и взнос через запятую:\n"
+        "Пример:\n`Летний Турнир, 0` — бесплатный\n"
         "`Кубок, 300` — платный", parse_mode="Markdown"
     )
     context.user_data['add_tournament'] = True
@@ -184,7 +177,7 @@ async def edit_winrate(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     await update.message.reply_text(
-        "Введите имя пользователя и кол-во побед через запятую:"
+        "Введите имя пользователя и кол-во побед через запятую:\n"
         "Пример: `xret, 2`", parse_mode="Markdown"
     )
     context.user_data['edit_winrate'] = True
@@ -215,7 +208,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             else:
                 username, wins = [x.strip() for x in text.split(",")]
                 wins = int(wins)
-                cursor.execute("INSERT INTO winrates (username, wins) VALUES (?, ?) ON CONFLICT(username) DO UPDATE SET wins = ?", (username, wins, wins))
+                cursor.execute("INSERT INTO winrates (username, wins) VALUES (?, ?) ON CONFLICT(username) DO UPDATE SET wins = ?",
+                               (username, wins, wins))
                 conn.commit()
                 await update.message.reply_text(f"✅ Winrate обновлён: @{username} — {wins} побед(ы)")
         except:
@@ -229,10 +223,7 @@ async def register_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     data = query.data
 
     if data.startswith("register_"):
-        parts = data.split("_")
-        tournament_id = int(parts[1])
-        mode = parts[2] if len(parts) > 2 else "solo"
-
+        tournament_id = int(data.split("_")[1])
         cursor.execute("SELECT name, fee FROM tournaments WHERE id = ?", (tournament_id,))
         tournament = cursor.fetchone()
         if not tournament:
@@ -241,26 +232,30 @@ async def register_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         name, fee = tournament
 
-        if mode == "solo":
-            cursor.execute("""SELECT * FROM registrations WHERE user_id = ? AND tournament_id = ?""", (user.id, tournament_id))
-            if cursor.fetchone():
-                await query.edit_message_text("✅ Вы уже зарегистрированы.")
-                return
-            cursor.execute("INSERT INTO registrations (user_id, username, tournament_id) VALUES (?, ?, ?)", (user.id, user.username or "", tournament_id))
-            conn.commit()
-            if fee > 0:
-                await query.edit_message_text(
-                    f"✅ Вы зарегистрированы на турнир: {name}!"
-                    f"💰 Взнос: {fee}₽"
-                    f"💳 Переведите сумму на карту:`{CARD_NUMBER}`"
-                    "📸 После оплаты отправьте скрин и команду /confirm для подтверждения.",
-                    parse_mode="Markdown"
-                )
-            else:
-                await query.edit_message_text(f"🎉 Вы зарегистрированы на турнир: {name}!")
-        elif mode == "team":
-            context.user_data['team_register'] = tournament_id
-            await query.edit_message_text("Введите 3 username участников команды через запятую (например: `user1, user2, user3`)")
+        cursor.execute("""
+            SELECT * FROM registrations 
+            WHERE user_id = ? AND tournament_id = ?
+        """, (user.id, tournament_id))
+        if cursor.fetchone():
+            await query.edit_message_text("✅ Вы уже зарегистрированы.")
+            return
+
+        cursor.execute("""
+            INSERT INTO registrations (user_id, username, tournament_id)
+            VALUES (?, ?, ?)
+        """, (user.id, user.username or "", tournament_id))
+        conn.commit()
+
+        if fee > 0:
+            await query.edit_message_text(
+                f"✅ Вы зарегистрированы на турнир: {name}!\n\n"
+                f"💰 Взнос: {fee}₽\n"
+                f"💳 Переведите сумму на карту:\n`{CARD_NUMBER}`\n\n"
+                "📸 После оплаты отправьте скрин и команду /confirm для подтверждения.",
+                parse_mode="Markdown"
+            )
+        else:
+            await query.edit_message_text(f"🎉 Вы зарегистрированы на турнир: {name}!")
 
     elif data.startswith("del_tourn_"):
         tournament_id = int(data.split("_")[2])
@@ -288,28 +283,11 @@ async def register_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data['edit_winrate'] = True
         await query.edit_message_text(f"Введите новое значение побед для @{username} (например: `3`)", parse_mode="Markdown")
 
-    elif context.user_data.get('team_register'):
-        try:
-            tournament_id = context.user_data.pop('team_register')
-            usernames = [u.strip() for u in update.callback_query.message.text.split(",")]
-            if len(usernames) != 3:
-                await query.edit_message_text("⚠️ Нужно указать 3 username через запятую.")
-                return
-
-            team_name = "_".join(usernames)
-            for u in usernames:
-                cursor.execute("INSERT INTO registrations (user_id, username, tournament_id, team) VALUES (?, ?, ?, ?)",
-                               (0, u, tournament_id, team_name))
-            conn.commit()
-            await update.callback_query.message.reply_text("✅ Команда зарегистрирована.")
-        except:
-            await update.callback_query.message.reply_text("⚠️ Ошибка при регистрации команды.")
-
 # === Запуск ===
-
 def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
 
+    # Обработчики команд
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("tournaments", tournaments))
     app.add_handler(CommandHandler("admin", admin))
@@ -320,6 +298,7 @@ def main():
     app.add_handler(CommandHandler("edit_winrate", edit_winrate))
     app.add_handler(CallbackQueryHandler(register_callback))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+
 
     print("🤖 Бот запущен!")
     app.run_polling()
