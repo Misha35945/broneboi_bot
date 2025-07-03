@@ -288,10 +288,10 @@ async def register_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
 
-    app.add_handler(CommandHandler("Старт", start))
-    app.add_handler(CommandHandler("Турниры", tournaments))
-    app.add_handler(CommandHandler("winrate", winrate))
-    app.add_handler(CommandHandler("Админ панель", admin))
+    app.add_handler(CommandHandler("Start", start))
+    app.add_handler(CommandHandler("Tournaments", tournaments))
+    app.add_handler(CommandHandler("Winrate", winrate))
+    app.add_handler(CommandHandler("Admin", admin))
     
     app.add_handler(CallbackQueryHandler(register_callback))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
